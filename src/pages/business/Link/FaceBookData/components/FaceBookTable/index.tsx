@@ -1,6 +1,4 @@
 import { ProColumns, ProTable } from "@ant-design/pro-components";
-import { useEffect } from "react";
-import './index.less';
 interface FaceBookTableProps {
     data: any[];
     pageTotal: number;
@@ -12,7 +10,6 @@ interface FaceBookTableProps {
 
 const FaceBookTable: React.FC<FaceBookTableProps> = ({  data, columns,pageTotal,currentPageSize,changePageTotal }) => {
     return (
-       
             <ProTable<any>
              scroll={{ x: 1800 }}
              columns={columns}
@@ -28,14 +25,10 @@ const FaceBookTable: React.FC<FaceBookTableProps> = ({  data, columns,pageTotal,
                 showQuickJumper: true,
                 total: pageTotal,
                 onChange: (page, pageSize) => {
-                    console.log('page', page);
-                    console.log('pageSize', pageSize);
-                    
                     changePageTotal(page, pageSize);
                 }
              }}
-             />
-       
+            />
     )
 }
 

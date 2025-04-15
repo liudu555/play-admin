@@ -1,5 +1,34 @@
 import { ProColumns } from "@ant-design/pro-components";
+import { Button, Drawer } from "antd";
+import { useState } from "react";
 
+/**
+ * 按钮2抽屉loading
+ */ 
+const Button2DrawerLoading = ({record}: {record: any}) => {
+    const [showDrawer, setShowDrawer] = useState(false);
+    const [currentRecord, setCurrentRecord] = useState(record);
+    return (
+        <div>
+            <Button type="primary" size="small" onClick={() => {
+                setShowDrawer(true);
+                setCurrentRecord(record);
+            }}>
+                分配用户
+            </Button>    
+            <Drawer title="分配用户" open={showDrawer} onClose={() => {
+                setShowDrawer(false);
+            }}
+            placement={'right'}
+            width={500}
+            >
+                <div>
+                    <p>{currentRecord.name}</p>
+                </div>
+            </Drawer>   
+        </div>
+    )
+}
 
 interface BaseAdvertisingItem {
     spend: string; /** 广告账户消耗 */
@@ -296,11 +325,17 @@ const advertisingAccountColumns: ProColumns<AdvertisingAccountItem>[] = [
     },
     {
         title: '操作',
-        width: 80,
+        width: 120,
         key: 'option',
         valueType: 'option',
+        align: 'center',
         fixed: 'right',
-      },
+        render: (_, record) => {
+            return (
+              <Button2DrawerLoading record={record} />
+            )
+        }
+    },
 ];
 
 interface CampaignItem {
