@@ -3,6 +3,8 @@ import { Button, Form, Input, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { history } from "@umijs/max";
 import { PostLogin } from "@/apis/login";
+import { tokenAtom ,refreshTokenAtom,userAtom} from "@/models/atomUser";
+import { useAtom } from "jotai";
 
 var md5 = require('md5');
 
@@ -16,6 +18,9 @@ interface LoginParams {
  */
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [token, setToken] = useAtom(tokenAtom);
+  const [refreshToken, setRefreshToken] = useAtom(refreshTokenAtom);
+  const [user, setUser] = useAtom(userAtom);
   const handleSubmit = async (values: LoginParams) => {
     try {
       setLoading(true);
@@ -25,8 +30,8 @@ const Login: React.FC = () => {
       });
       if(code === 200) {
         message.success("登录成功");
-        localStorage.setItem("token", data.access);
-        localStorage.setItem("refreshToken", data.refresh);
+        setToken(data.access);
+        setRefreshToken(data.refresh);
         history.push("/");
       } else {
         message.error(msg);
@@ -35,6 +40,8 @@ const Login: React.FC = () => {
       message.error("登录失败");
     } finally {
       setLoading(false);
+       //需要刷新一下页面
+       window.location.reload();
     }
   };
 

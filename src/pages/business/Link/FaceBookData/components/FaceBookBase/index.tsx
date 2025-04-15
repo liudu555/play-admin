@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 import { baseMock } from './baseMock';
 import './index.less';
 const BaseItem: React.FC<{item: any}> = ({item}) => {
-    console.log('item', item.themeColor);
-    
     return (
        <div className='base-item'>
         <div className={`base-content`} style={{borderLeft: `5px solid ${item.themeColor} `}}>
