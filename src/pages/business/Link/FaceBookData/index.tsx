@@ -3,7 +3,7 @@ import CardContainer from "@/components/CardContainer";
 import FaceBookSearch from "./components/FaceBookSearch";
 import FaceBookBase from "./components/FaceBookBase";
 import FaceBookTab from "./components/FaceBookTab";
-import { GetAdvertisingAccountList, GetCampaignList, GetAdsetList, GetAdList, GetSummaryData } from "@/apis/facebook";
+import { GetAdvertisingAccountList, GetCampaignList, GetAdsetList, GetAdList, GetSummaryData } from "@/apis/facebook/bookRequest";
 import { message } from "antd";
 import AdvertisingType from "./enum";
 import { faceBookOrderRegisterAtom, faceBookOrderPaySubAtom, faceBookOrderFirstDayPayRateAtom } from "@/models/atomFaceBook";

@@ -3,25 +3,95 @@ import CardContainer from "@/components/CardContainer";
 import { Tag, Button, Modal, Form, Input, Select, message } from 'antd';
 import { useState, useEffect } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-
+import { GetUserList, PostAddUser,PutEditUser,DeleteUser } from '@/apis/user/mangerRequest';
+import { GetDepartMentList } from '@/apis/user/groupRequest';
+const md5 = require('md5');
 interface BusinessUserRecord {
   id: number;
+  name: string;
   username: string;
-  status: string;
-  role: string;
-  registerTime: string;
+  state: string;
+  accounts: Array<any>;
+  dept: any;
+  is_deleted: boolean;
+  addtime: string;
 }
+
+const UserState = {
+  '1': {
+    color: 'blue',
+    text: '管理员'
+  },
+  '2': {
+    color: 'green',
+    text: '组长'
+  },
+  '3': {
+    color: 'red',
+    text: '运营'
+  },
+}
+
+
 
 const BusinessUser: React.FC = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<BusinessUserRecord | null>(null);
-  const [tableData, setTableData] = useState<BusinessUserRecord[]>([]);
-
+  const [userList, setUserList] = useState<BusinessUserRecord[]>([]);
+  const [departMentList, setDepartMentList] = useState<any[]>([]);
+  /** 总页数 */
+  const [pageTotal, setPageTotal] = useState<number>(0);
+  /** 每页条数 */
+  const [currentPageSize, setCurrentPageSize] = useState<number>(10);
+  useEffect(() => {
+    console.log('form',form.getFieldsValue());
+    
+  }, [form]);
+  const [searchParams, setSearchParams] = useState<{
+    ordering: string | undefined; /** 排序 */
+    search: string | undefined; /** 搜索 */
+    state: string | undefined; /** 状态 */
+    page_size: number | undefined; /** 每页条数 */
+    page: number | undefined; /** 页码 */
+    accounts: number | undefined; /** 账户 */
+   }>({
+    ordering: undefined,
+    state: undefined,
+    page_size: 10,
+    page: 1,
+    accounts: undefined,
+    search: undefined,
+   });
+  /** 获取用户列表 */
+  const loadUserList = async () => {
+   try {
+    const {code,data} = await GetUserList(searchParams);
+    if(code === 200) {
+      setUserList(data.results);
+      setPageTotal(data.pagination.total_items);
+      setCurrentPageSize(data.pagination.current_page_size);
+    }
+   } catch (error) {
+    console.error('获取用户列表失败:', error);
+   }
+  }
+  /** 获取小组列表 */
+  const loadDepartMentList = async () => {
+    const {code,data} = await GetDepartMentList();
+    if(code === 200) {
+      console.log('小组列表',data.results);
+      
+      setDepartMentList(data.results);
+    } else {
+      message.error('获取小组列表失败');
+    }
+  }
   useEffect(() => {
     // 初始化表格数据
-    setTableData(data);
-  }, []);
+    loadUserList();
+    loadDepartMentList();
+  }, [searchParams]);
 
   const handleAdd = () => {
     form.resetFields();
@@ -30,7 +100,17 @@ const BusinessUser: React.FC = () => {
   };
 
   const handleEdit = (record: BusinessUserRecord) => {
-    form.setFieldsValue(record);
+    console.log('编辑',record);
+    const {dept} = record;
+    form.setFieldsValue({
+      id: record.id,
+      username: record.username,
+      state: record.state,
+      password: undefined,
+      confirmPassword: undefined,
+      dept_id: dept?.id,
+      dept: dept?.name,
+    });
     setEditingRecord(record);
     setModalVisible(true);
   };
@@ -39,33 +119,55 @@ const BusinessUser: React.FC = () => {
     Modal.confirm({
       title: '确认删除',
       content: `确定要删除用户 ${record.username} 吗？`,
-      onOk: () => {
-        setTableData(tableData.filter(item => item.id !== record.id));
-        message.success('删除成功');
+      onOk: async () => {
+            const {code} = await DeleteUser(record.id);
+            if(code === 200) {
+              message.success('删除成功');
+              loadUserList();
+            } else {
+              message.error('删除失败');
+            }
       }
     });
   };
 
   const handleModalOk = async () => {
     try {
-      const values = await form.validateFields();
-      if (editingRecord) {
-        // 编辑
-        setTableData(tableData.map(item => 
-          item.id === editingRecord.id ? { ...item, ...values } : item
-        ));
-        message.success('编辑成功');
+      const values = await form.validateFields(); 
+      let md5Password = '';
+      if (values.password) {
+        md5Password = md5(values.password);
+        const md5ConfirmPassword = md5(values.confirmPassword);
+        //两次密码一致
+        if(md5Password !== md5ConfirmPassword) {
+          message.error('两次密码不一致');
+          return;
+        }
+      }
+      if (values.id) {
+        const {code} = await PutEditUser(values);
+        if(code === 200) {
+          message.success('编辑成功');
+          loadUserList();
+        } else {
+          message.error('编辑失败');
+        }
       } else {
-        // 新增
-        const newRecord = {
+        console.log('新增',values);
+        let postData = {
           ...values,
-          id: tableData.length ? Math.max(...tableData.map(item => item.id)) + 1 : 1,
-          registerTime: new Date().toLocaleString()
-        };
-        setTableData([...tableData, newRecord]);
-        message.success('添加成功');
+          password: md5Password,
+        }
+        const {code} = await PostAddUser(postData);
+        if(code === 200) {
+          message.success('添加成功');
+          loadUserList();
+        } else {
+          message.error('添加失败');
+        }
       }
       setModalVisible(false);
+      form.resetFields();
     } catch (error) {
       console.error('表单验证失败:', error);
     }
@@ -83,28 +185,54 @@ const BusinessUser: React.FC = () => {
       key: 'username',
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-    },
-    {
       title: '角色',
-      dataIndex: 'role',
-      key: 'role',
+      dataIndex: 'state',
+      key: 'state',
       render: (_, record) => {
-        let color = 'blue';
-        if (record.role === '管理员') {
-          color = 'red';
-        } else if (record.role === '普通用户') {
-          color = 'green';
-        }
-        return <Tag color={color}>{record.role}</Tag>;
+        const {color,text} = UserState[record.state as keyof typeof UserState];
+        return <Tag color={color}>{text}</Tag>;
       }
     },
     {
-      title: '注册时间',
-      dataIndex: 'registerTime',
-      key: 'registerTime',
+      title: '小组',
+      dataIndex: 'dept',
+      key: 'dept',
+      render: (_, record) => { 
+        if(record.dept?.name) {
+          return <span>{record.dept?.name}</span>
+        } else {
+          return <span>暂无小组</span>
+        }
+      }
+    },
+    {
+      title: '广告账户',
+      dataIndex: 'accounts',
+      key: 'accounts',
+      render: (_, record) => {
+        const {accounts} = record;
+        return <div className='flex flex-wrap gap-2'>
+          {
+            accounts.length > 0 ? accounts.map((item:any) => {
+              return <Tag color='blue' key={item.id}>{item.name}</Tag>
+            }) : <Tag color='blue'>暂无广告账户</Tag>
+          }
+        </div>
+      },
+      width: 280,
+    },
+    {
+      title: '添加时间',
+      dataIndex: 'addtime',
+      key: 'addtime',
+    },
+    {
+      title: '是否有效',
+      dataIndex: 'is_deleted',
+      key: 'is_deleted',
+      render: (_, record) => {
+        return record.is_deleted ? <Tag color='red'>已删除</Tag> : <Tag color='green'>正常</Tag>;
+      }
     },
     {
       title: '操作',
@@ -118,84 +246,13 @@ const BusinessUser: React.FC = () => {
     },
   ];
 
-  const data: BusinessUserRecord[] = [
-    {
-      id: 1,
-      username: 'admin',
-      status: '正常',
-      role: '管理员',
-      registerTime: '2023-10-18 10:45',
-    },
-    {
-      id: 2,
-      username: 'user1',
-      status: '正常', 
-      role: '普通用户',
-      registerTime: '2023-10-17 14:30',
-    },
-    {
-      id: 3,
-      username: 'editor',
-      status: '禁用',
-      role: '编辑',
-      registerTime: '2023-10-16 09:15',
-    },
-    {
-      id: 4,
-      username: 'manager',
-      status: '正常',
-      role: '管理员',
-      registerTime: '2023-10-15 16:20',
-    },
-    {
-      id: 5,
-      username: 'user2',
-      status: '正常',
-      role: '普通用户',
-      registerTime: '2023-10-14 11:35',
-    },
-    {
-      id: 6,
-      username: 'reviewer',
-      status: '正常',
-      role: '审核员',
-      registerTime: '2023-10-13 13:25',
-    },
-    {
-      id: 7,
-      username: 'user3',
-      status: '禁用',
-      role: '普通用户',
-      registerTime: '2023-10-12 15:40',
-    },
-    {
-      id: 8,
-      username: 'operator',
-      status: '正常',
-      role: '运营',
-      registerTime: '2023-10-11 10:55',
-    },
-    {
-      id: 9,
-      username: 'user4',
-      status: '正常',
-      role: '普通用户',
-      registerTime: '2023-10-10 17:15',
-    },
-    {
-      id: 10,
-      username: 'analyst',
-      status: '正常',
-      role: '分析师',
-      registerTime: '2023-10-09 12:30',
-    }
-  ];
+
 
   return (
     <CardContainer title="用户管理">
       <ProTable<BusinessUserRecord>
         columns={columns}
-        dataSource={tableData}
+        dataSource={userList}
         rowKey="id"
         search={false}
         toolBarRender={() => [
@@ -204,7 +261,11 @@ const BusinessUser: React.FC = () => {
           </Button>
         ]}
         pagination={{
-          pageSize: 10,
+          pageSize: currentPageSize,
+          total: pageTotal,
+          onChange: (page, pageSize) => {
+            setSearchParams({...searchParams, page, page_size: pageSize});
+          },
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
           showSizeChanger: true,
           showQuickJumper: true,
@@ -220,6 +281,12 @@ const BusinessUser: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
+            name="id"
+            hidden
+          >
+            <Input value={editingRecord?.id} />
+          </Form.Item>
+          <Form.Item
             name="username"
             label="用户名称"
             rules={[{ required: true, message: '请输入用户名称' }]}
@@ -230,42 +297,50 @@ const BusinessUser: React.FC = () => {
           <Form.Item
             name="password"
             label="密码"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[{ required: !editingRecord, message: '请输入密码' }]}
           >
-            <Input.Password placeholder="请输入" iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)} />
+            <Input.Password 
+              placeholder={editingRecord ? '留空则不修改密码' : '请输入'} 
+              iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)}
+              autoComplete="new-password"
+            />
           </Form.Item>
 
           <Form.Item
             name="confirmPassword"
             label="确认密码"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[{ required: !editingRecord, message: '请输入密码' }]}
           >
-            <Input.Password placeholder="请输入" iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)} />
+            <Input.Password 
+              placeholder={editingRecord ? '留空则不修改密码' : '请输入'} 
+              iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)}
+              autoComplete="new-password"
+            />
           </Form.Item>
           
           <Form.Item
-            name="status"
-            label="状态"
-            rules={[{ required: true, message: '请选择状态' }]}
+            name="state"
+            label="角色"
+            rules={[{ required: true, message: '请选择角色' }]}
           >
             <Select placeholder="请选择">
-              <Select.Option value="正常">正常</Select.Option>
-              <Select.Option value="禁用">禁用</Select.Option>
+              <Select.Option value="1">管理员</Select.Option>
+              <Select.Option value="2">组长</Select.Option>
+              <Select.Option value="3">运营</Select.Option>
             </Select>
           </Form.Item>
           
           <Form.Item
-            name="role"
+            name="dept_id"
             label="所属小组"
             rules={[{ required: true, message: '请选择角色' }]}
           >
             <Select placeholder="请选择">
-              <Select.Option value="管理员">管理员</Select.Option>
-              <Select.Option value="普通用户">普通用户</Select.Option>
-              <Select.Option value="编辑">编辑</Select.Option>
-              <Select.Option value="审核员">审核员</Select.Option>
-              <Select.Option value="运营">运营</Select.Option>
-              <Select.Option value="分析师">分析师</Select.Option>
+              {
+                departMentList.map((item:any) => {
+                  return <Select.Option value={item.id}>{item.name}</Select.Option>
+                })
+              }
             </Select>
           </Form.Item>
         </Form>

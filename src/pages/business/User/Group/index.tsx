@@ -3,26 +3,64 @@ import CardContainer from "@/components/CardContainer";
 import { Tag, Button, Modal, Form, Input, Select, message } from 'antd';
 import { useState, useEffect } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-
+import { GetDepartMentList, PostAddDepartMent } from '@/apis/user/groupRequest';
+import { GetUserList } from '@/apis/user/mangerRequest';
 interface GroupRecord {
   id: number;
-  groupName: string;
-  description: string;
-  memberCount: number;
-  status: string;
-  createTime: string;
+  name: string;
+  leader: any;
+  users: Array<any>;
 }
 
 const Group: React.FC = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<GroupRecord | null>(null);
-  const [tableData, setTableData] = useState<GroupRecord[]>([]);
-
+  const [departMentList, setDepartMentList] = useState<GroupRecord[]>([]);
+  const [userList, setUserList] = useState<any[]>([]);
+  const [pageTotal, setPageTotal] = useState<number>(0);
+  const [currentPageSize, setCurrentPageSize] = useState<number>(10);
+  const [searchParams, setSearchParams] = useState<{
+    page_size: number | undefined; /** 每页条数 */
+    page: number | undefined; /** 页码 */
+  }>({
+    page_size: 10,
+    page: 1,
+  });
   useEffect(() => {
     // 初始化表格数据
-    setTableData(data);
+    loadDepartMentList();
+    loadUserList();
   }, []);
+
+  /**
+   * 获取用户列表
+   */
+  const loadUserList = async () => {
+    const {code,data} = await GetUserList({
+      page_size: 1000,
+      page: 1,
+    });
+    if(code === 200) {
+      setUserList(data.results);
+    } else {
+      message.error('获取用户列表失败');
+    }
+  }
+
+  /**
+   * 获取小组列表
+   */
+  const loadDepartMentList = async () => {
+    const {code,data} = await GetDepartMentList();
+    if(code === 200) {
+      setDepartMentList(data.results);
+      setPageTotal(data.pagination.total_items);
+      setCurrentPageSize(data.pagination.current_page_size);
+    } else {
+      message.error('获取小组列表失败');
+    }
+  }
 
   const handleAdd = () => {
     form.resetFields();
@@ -30,42 +68,29 @@ const Group: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleEdit = (record: GroupRecord) => {
-    form.setFieldsValue(record);
-    setEditingRecord(record);
-    setModalVisible(true);
-  };
-
-  const handleDelete = (record: GroupRecord) => {
-    Modal.confirm({
-      title: '确认删除',
-      content: `确定要删除小组 ${record.groupName} 吗？`,
-      onOk: () => {
-        setTableData(tableData.filter(item => item.id !== record.id));
-        message.success('删除成功');
-      }
-    });
-  };
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields();
-      if (editingRecord) {
-        // 编辑
-        setTableData(tableData.map(item => 
-          item.id === editingRecord.id ? { ...item, ...values } : item
-        ));
-        message.success('编辑成功');
+      console.log('values',values);
+      
+      if (values.id) {
+      
+        console.log('编辑',values);
+        
       } else {
         // 新增
-        const newRecord = {
-          ...values,
-          id: tableData.length > 0 ? Math.max(...tableData.map(item => item.id)) + 1 : 1,
-          createTime: new Date().toLocaleString(),
-          memberCount: 0
-        };
-        setTableData([...tableData, newRecord]);
-        message.success('添加成功');
+        const {code,data} = await PostAddDepartMent({
+          name: values.name,
+          leader_id: values.leader_id,
+          user_ids: values.user_ids,
+        })
+        if(code === 200) {
+          message.success('新增成功');
+          loadDepartMentList();
+        } else {
+          message.error('新增失败');
+        }
       }
       setModalVisible(false);
     } catch (error) {
@@ -81,86 +106,48 @@ const Group: React.FC = () => {
     },
     {
       title: '小组名称',
-      dataIndex: 'groupName',
-      key: 'groupName',
+      dataIndex: 'name',
+      key: 'name',
     },
     {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
+      title: '组长',
+      dataIndex: 'leader',
+      key: 'leader',
       ellipsis: true,
-    },
-    {
-      title: '成员数量',
-      dataIndex: 'memberCount',
-      key: 'memberCount',
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (text) => {
-        const color = text === '正常' ? 'green' : 'red';
-        return <Tag color={color}>{text}</Tag>;
+      render: (_,record) => {
+        if(record?.leader?.username) {
+          return <span>{record?.leader?.username}</span>
+        } else {
+          return <span>暂无组长</span>
+        }
       }
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_, record) => (
-        <>
-          <a onClick={() => handleEdit(record)}>编辑</a>
-          <a style={{ marginLeft: 8, color: '#ff4d4f' }} onClick={() => handleDelete(record)}>删除</a>
-        </>
-      ),
+      title: '组员',
+      dataIndex: 'users',
+      key: 'users',
+      render: (_,record) => {
+        if(record?.users?.length > 0) {
+          return <div className='flex flex-wrap gap-2'> 
+            {
+              record?.users?.map((item:any) => {
+                return <Tag key={item.id} color='blue'>{item.username}</Tag>
+              })
+            }
+          </div>
+        } else {
+          return <Tag color='blue'>暂无组员</Tag>
+        }
+      }
     },
   ];
 
-  const data: GroupRecord[] = [
-    {
-      id: 1,
-      groupName: '管理员组',
-      description: '系统管理员小组，拥有最高权限',
-      memberCount: 3,
-      status: '正常',
-      createTime: '2023-10-01 08:00',
-    },
-    {
-      id: 2,
-      groupName: '运营组',
-      description: '负责日常运营和内容管理',
-      memberCount: 8,
-      status: '正常',
-      createTime: '2023-10-02 09:15',
-    },
-    {
-      id: 3,
-      groupName: '开发组',
-      description: '负责系统开发和维护',
-      memberCount: 12,
-      status: '正常',
-      createTime: '2023-10-03 10:30',
-    },
-    {
-      id: 4,
-      groupName: '测试组',
-      description: '负责系统测试和质量保证',
-      memberCount: 5,
-      status: '禁用',
-      createTime: '2023-10-04 11:45',
-    },
-  ];
 
   return (
     <CardContainer title="小组管理">
       <ProTable<GroupRecord>
         columns={columns}
-        dataSource={tableData}
+        dataSource={departMentList}
         rowKey="id"
         search={false}
         toolBarRender={() => [
@@ -169,7 +156,11 @@ const Group: React.FC = () => {
           </Button>
         ]}
         pagination={{
-          pageSize: 10,
+          pageSize: currentPageSize,
+          total: pageTotal,
+          onChange: (page, pageSize) => {
+            setSearchParams({...searchParams, page, page_size: pageSize});
+          },
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
           showSizeChanger: true,
           showQuickJumper: true,
@@ -185,7 +176,13 @@ const Group: React.FC = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="groupName"
+            name="id"
+            hidden
+          >
+            <Input value={editingRecord?.id} />
+          </Form.Item>
+          <Form.Item
+            name="name"
             label="小组名称"
             rules={[{ required: true, message: '请输入小组名称' }]}
           >
@@ -193,21 +190,33 @@ const Group: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="description"
-            label="描述"
-            rules={[{ required: true, message: '请输入小组描述' }]}
-          >
-            <Input.TextArea rows={4} placeholder="请输入小组描述" />
-          </Form.Item>
-          
-          <Form.Item
-            name="status"
-            label="状态"
-            rules={[{ required: true, message: '请选择状态' }]}
+            name="leader_id"
+            label="组长"
+            rules={[{ required: true, message: '请选择组长' }]}
           >
             <Select placeholder="请选择">
-              <Select.Option value="正常">正常</Select.Option>
-              <Select.Option value="禁用">禁用</Select.Option>
+              {
+                userList.map((item:any) => {
+                  return <Select.Option value={item.id}>{item.username}</Select.Option>
+                })
+              }
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="user_ids"
+            label="组员"
+            rules={[{ required: true, message: '请选择组员' }]}
+          >
+            <Select 
+              mode="multiple"
+              placeholder="请选择"
+            > 
+              {
+                userList.map((item:any) => {
+                  return <Select.Option value={item.id}>{item.username}</Select.Option>
+                })
+              }
             </Select>
           </Form.Item>
         </Form>

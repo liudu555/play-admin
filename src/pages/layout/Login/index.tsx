@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Form, Input, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { history } from "@umijs/max";
-import { PostLogin } from "@/apis/login";
+import { PostLogin } from "@/apis/login/login";
 import { tokenAtom ,refreshTokenAtom,userAtom} from "@/models/atomUser";
 import { useAtom } from "jotai";
 

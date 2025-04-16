@@ -1,6 +1,6 @@
 import { history } from "@umijs/max";
 import type { RequestConfig }  from '@umijs/max';
-import { GetUserInfo } from './apis/user';
+import { GetUserInfo } from './apis/login/loginUser';
 import { useAtom } from 'jotai';
 import {  userAtom} from '@/models/atomUser';
 // 运行时配置
