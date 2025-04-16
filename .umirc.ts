@@ -80,7 +80,7 @@ export default defineConfig({
   tailwindcss: {},
   proxy: {
     '/api': {
-      'target': 'http://192.168.2.9:8001/',
+      'target': 'http://192.168.2.158:8001/',
       'changeOrigin': true,
       // 'pathRewrite': { '^/api' : '' },
     },

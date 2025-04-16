@@ -1,17 +1,22 @@
 import { ProColumns, ProTable } from "@ant-design/pro-components";
 interface FaceBookTableProps {
-    data: any[];
-    pageTotal: number;
-    currentPageSize: number;
-    changePageTotal: (page: number,pageSize: number) => void;
-    columns: ProColumns<any>[];
+    data: any[]; /** 数据 */
+    pageTotal: number; /** 总页数 */
+    currentPageSize: number; /** 当前页大小 */
+    changePageTotal: (page: number,pageSize: number) => void; /** 改变页大小 */
+    columns: ProColumns<any>[]; /** 列 */
 }
 
 
-const FaceBookTable: React.FC<FaceBookTableProps> = ({  data, columns,pageTotal,currentPageSize,changePageTotal }) => {
+const FaceBookTable: React.FC<FaceBookTableProps> = ({  data, 
+    columns,
+    pageTotal,
+    currentPageSize,
+    changePageTotal, 
+}) => {
     return (
             <ProTable<any>
-             scroll={{ x: 1800 }}
+             scroll={{ x: 1300 }}
              columns={columns}
              bordered
              dataSource={data}

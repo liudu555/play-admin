@@ -1,4 +1,3 @@
-import { ProCard } from '@ant-design/pro-components';
 import { useEffect, useState } from 'react';
 import { baseMock } from './baseMock';
 import './index.less';
@@ -22,16 +21,17 @@ const BaseItem: React.FC<{item: any}> = ({item}) => {
     )
 }
 
-const FaceBookBase: React.FC = () => {
-
+const FaceBookBase: React.FC<{summaryData: any}> = ({summaryData}) => {
     const [baseData, setBaseData] = useState<any[]>([]);
     const loadBaseData = async () => {
-        const res = await baseMock();
+        console.log('111');
+        
+        const res = await baseMock(summaryData);
         setBaseData(res);
     }
     useEffect(() => {
         loadBaseData();
-    }, [])
+    }, [summaryData])
   return (
     <div className='flex mt-10 gap-[10px]'>
         {

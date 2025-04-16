@@ -1,9 +1,77 @@
-import { ProTable } from '@ant-design/pro-components';
+import { ProTable, ProColumns } from '@ant-design/pro-components';
 import CardContainer from "@/components/CardContainer";
-import { Tag } from 'antd';
+import { Tag, Button, Modal, Form, Input, Select, message } from 'antd';
+import { useState, useEffect } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
+
+interface BusinessUserRecord {
+  id: number;
+  username: string;
+  status: string;
+  role: string;
+  registerTime: string;
+}
 
 const BusinessUser: React.FC = () => {
-  const columns = [
+  const [form] = Form.useForm();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<BusinessUserRecord | null>(null);
+  const [tableData, setTableData] = useState<BusinessUserRecord[]>([]);
+
+  useEffect(() => {
+    // 初始化表格数据
+    setTableData(data);
+  }, []);
+
+  const handleAdd = () => {
+    form.resetFields();
+    setEditingRecord(null);
+    setModalVisible(true);
+  };
+
+  const handleEdit = (record: BusinessUserRecord) => {
+    form.setFieldsValue(record);
+    setEditingRecord(record);
+    setModalVisible(true);
+  };
+
+  const handleDelete = (record: BusinessUserRecord) => {
+    Modal.confirm({
+      title: '确认删除',
+      content: `确定要删除用户 ${record.username} 吗？`,
+      onOk: () => {
+        setTableData(tableData.filter(item => item.id !== record.id));
+        message.success('删除成功');
+      }
+    });
+  };
+
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields();
+      if (editingRecord) {
+        // 编辑
+        setTableData(tableData.map(item => 
+          item.id === editingRecord.id ? { ...item, ...values } : item
+        ));
+        message.success('编辑成功');
+      } else {
+        // 新增
+        const newRecord = {
+          ...values,
+          id: tableData.length ? Math.max(...tableData.map(item => item.id)) + 1 : 1,
+          registerTime: new Date().toLocaleString()
+        };
+        setTableData([...tableData, newRecord]);
+        message.success('添加成功');
+      }
+      setModalVisible(false);
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
+  };
+
+  const columns: ProColumns<BusinessUserRecord>[] = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -11,7 +79,7 @@ const BusinessUser: React.FC = () => {
     },
     {
       title: '用户名',
-      dataIndex: 'username',
+      dataIndex: 'username', 
       key: 'username',
     },
     {
@@ -23,14 +91,14 @@ const BusinessUser: React.FC = () => {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
-      render: (role: string) => {
+      render: (_, record) => {
         let color = 'blue';
-        if (role === '管理员') {
+        if (record.role === '管理员') {
           color = 'red';
-        } else if (role === '普通用户') {
+        } else if (record.role === '普通用户') {
           color = 'green';
         }
-        return <Tag color={color}>{role}</Tag>;
+        return <Tag color={color}>{record.role}</Tag>;
       }
     },
     {
@@ -41,16 +109,16 @@ const BusinessUser: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: () => (
+      render: (_, record) => (
         <>
-          <a>编辑</a>
-          <a style={{ marginLeft: 8, color: '#ff4d4f' }}>删除</a>
+          <a onClick={() => handleEdit(record)}>编辑</a>
+          <a style={{ marginLeft: 8, color: '#ff4d4f' }} onClick={() => handleDelete(record)}>删除</a>
         </>
       ),
     },
   ];
 
-  const data = [
+  const data: BusinessUserRecord[] = [
     {
       id: 1,
       username: 'admin',
@@ -61,7 +129,7 @@ const BusinessUser: React.FC = () => {
     {
       id: 2,
       username: 'user1',
-      status: '正常',
+      status: '正常', 
       role: '普通用户',
       registerTime: '2023-10-17 14:30',
     },
@@ -125,12 +193,16 @@ const BusinessUser: React.FC = () => {
 
   return (
     <CardContainer title="用户管理">
-      <ProTable 
+      <ProTable<BusinessUserRecord>
         columns={columns}
-        dataSource={data}
+        dataSource={tableData}
         rowKey="id"
         search={false}
-        toolBarRender={false}
+        toolBarRender={() => [
+          <Button key="add" type="primary" onClick={handleAdd} icon={<PlusOutlined />}>
+            新增用户
+          </Button>
+        ]}
         pagination={{
           pageSize: 10,
           showTotal: (total, range) => `${range[0]}-${range[1]} of ${total}`,
@@ -138,6 +210,66 @@ const BusinessUser: React.FC = () => {
           showQuickJumper: true,
         }}
       />
+
+      <Modal
+        title={editingRecord ? '编辑用户' : '新增用户'}
+        open={modalVisible}
+        onOk={handleModalOk}
+        onCancel={() => setModalVisible(false)}
+        destroyOnClose
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="username"
+            label="用户名称"
+            rules={[{ required: true, message: '请输入用户名称' }]}
+          >
+            <Input placeholder="请输入" />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            label="密码"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password placeholder="请输入" iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)} />
+          </Form.Item>
+
+          <Form.Item
+            name="confirmPassword"
+            label="确认密码"
+            rules={[{ required: true, message: '请输入密码' }]}
+          >
+            <Input.Password placeholder="请输入" iconRender={visible => (visible ? <span>👁️</span> : <span>👁️‍🗨️</span>)} />
+          </Form.Item>
+          
+          <Form.Item
+            name="status"
+            label="状态"
+            rules={[{ required: true, message: '请选择状态' }]}
+          >
+            <Select placeholder="请选择">
+              <Select.Option value="正常">正常</Select.Option>
+              <Select.Option value="禁用">禁用</Select.Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item
+            name="role"
+            label="所属小组"
+            rules={[{ required: true, message: '请选择角色' }]}
+          >
+            <Select placeholder="请选择">
+              <Select.Option value="管理员">管理员</Select.Option>
+              <Select.Option value="普通用户">普通用户</Select.Option>
+              <Select.Option value="编辑">编辑</Select.Option>
+              <Select.Option value="审核员">审核员</Select.Option>
+              <Select.Option value="运营">运营</Select.Option>
+              <Select.Option value="分析师">分析师</Select.Option>
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
     </CardContainer>
   );
 };

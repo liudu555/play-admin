@@ -1,28 +1,30 @@
-export const baseMock = async () => [
-    {
-        id: 1,
-        name: '基础数据',
-        themeColor: '#ff9a9e',
-        list: [
+export const baseMock = async (summaryData: any) => {
+    console.log('summaryData', summaryData);
+    return [
+        {
+            id: 1,
+            name: '基础数据',
+            themeColor: '#ff9a9e',
+            list: [
             {
                 id: 1,
                 name: '总余额',
-                value: '$38,233.52',
+                value: summaryData?.basic?.available_spent ? Number(summaryData.basic.available_spent).toFixed(2) : '0.00',
             },
             {
                 id: 2,
                 name: '总消耗',
-                value: '$12,454',
+                value: summaryData?.basic?.spend ? Number(summaryData.basic.spend).toFixed(2) : '0.00',
             },
             {
                 id: 3,
                 name: '总回收',
-                value: '$12,454',
+                value: summaryData?.basic?.order_amount ? Number(summaryData.basic.order_amount).toFixed(2) : '0.00',
             },
             {
                 id: 4,
                 name: '总ROI',
-                value: '1.23',
+                value: summaryData?.basic?.roi ? Number(summaryData.basic.roi).toFixed(2) : '0.00',
             },
         ]
     },
@@ -34,12 +36,12 @@ export const baseMock = async () => [
             {
                 id: 1,
                 name: '总注册人数',
-                value: '12',
+                value: summaryData?.registration?.registration_count ? Number(summaryData.registration.registration_count).toFixed(2) : '0.00',
             },
             {
                 id: 2,
                 name: '总注册成本',
-                value: '$12,454',
+                value: summaryData?.registration?.registration_cost ? Number(summaryData.registration.registration_cost).toFixed(2) : '0.00',
             }
         ]
     },{
@@ -50,21 +52,21 @@ export const baseMock = async () => [
             {
                 id: 1,
                 name: '总充值人数',
-                value: '12',
+                value: summaryData?.subscription?.paying_users ? Number(summaryData.subscription.paying_users).toFixed(2) : '0.00',
             },
             {
                 id: 2,
                 name: '总支付率',
-                value: '0.0%',
+                value: summaryData?.subscription?.payment_rate ? Number(summaryData.subscription.payment_rate).toFixed(2) : '0.00',
             },
             {
                 id: 3,
                 name: '总订阅人数',
-                value: '66',
+                value: summaryData?.subscription?.total_subscribers ? Number(summaryData.subscription.total_subscribers).toFixed(2) : '0.00',
             },{
                 id: 4,
                 name: '总订阅率',
-                value: '0.0%',
+                value: summaryData?.subscription?.subscription_rate ? Number(summaryData.subscription.subscription_rate).toFixed(2) : '0.00',
             }
         ]
     },{
@@ -75,22 +77,23 @@ export const baseMock = async () => [
             {
                 id: 1,
                 name: '总首日人数',
-                value: '12',
+                value: summaryData?.first_day?.first_day_users ? Number(summaryData.first_day.first_day_users).toFixed(2) : '0.00',
             },
             {
                 id: 2,
                 name: '总支付率',
-                value: '0.0%',
+                value: summaryData?.first_day?.first_day_rate ? Number(summaryData.first_day.first_day_rate).toFixed(2) : '0.00',
             },
             {
                 id: 3,
                 name: '总人均支付',
-                value: '$30',
+                value: summaryData?.first_day?.per_capita ? Number(summaryData.first_day.per_capita).toFixed(2) : '0.00',
             },{
                 id: 4,
                 name: '付费成本',
-                value: '$12,454',
+                value: summaryData?.first_day?.pay_cost ? Number(summaryData.first_day.pay_cost).toFixed(2) : '0.00',
             }
         ]
-    }
-]
+    }       
+    ]
+}
