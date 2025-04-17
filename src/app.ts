@@ -1,28 +1,32 @@
 import { history } from "@umijs/max";
-import type { RequestConfig }  from '@umijs/max';
+import type { RequestConfig } from '@umijs/max';
 import { GetUserInfo } from './apis/login/loginUser';
-import { useAtom } from 'jotai';
-import {  userAtom} from '@/models/atomUser';
-// 运行时配置
-const loginPath = '/login';
+import { PostRefreshToken } from './apis/login/login';
+import { refreshTokenAtom, tokenAtom, userAtom } from '@/models/atomUser';
+import { message } from 'antd';
+import { useSetAtom } from 'jotai';
+import { request as _request } from '@@/plugin-request';
 
-// 全局初始化数据配置，用于 Layout 用户信息和权限初始化
-// 更多信息见文档：https://umijs.org/docs/api/runtime-config#getinitialstate
+const loginPath = '/login';
+console.warn = () => {};
+
+// Global initialization data configuration for Layout user information and permission initialization
 export async function getInitialState(): Promise<any> {
   const fetchUserInfo = async () => {
     try {
-      const {data,code} = await GetUserInfo();
-      if(code === 200) {
+      const { data, code } = await GetUserInfo();
+      if (code === 200) {
         return data;
       } else {
-        throw new Error('获取用户信息失败')
+        throw new Error('Failed to get user information');
       }
     } catch (error) {
-      history.push(loginPath);
+      console.log('error', error);
     }
     return undefined;
-  }; 
-  // 如果是登录页面，不执行
+  };
+
+  // Do not execute if it is the login page
   if (history.location.pathname !== loginPath) {
     const currentUser = await fetchUserInfo();
     return {
@@ -38,8 +42,8 @@ export async function getInitialState(): Promise<any> {
 }
 
 export const layout = ({ initialState }: any) => {
-  const {currentUser} = initialState;
-  const [user, setUser] = useAtom(userAtom);
+  const { currentUser } = initialState;
+  const setUser = useSetAtom(userAtom);
   setUser(currentUser);
   return {
     logo: 'https://img.alicdn.com/tfs/TB1YHEpwUT1gK0jSZFhXXaAtVXa-28-27.svg',
@@ -57,7 +61,6 @@ export const layout = ({ initialState }: any) => {
       fontVariant: 'normal',
       fontStretch: 'normal',
     },
-    //菜单选中颜色
     token: {
       header: {
         colorBgHeader: '#fff',
@@ -67,42 +70,45 @@ export const layout = ({ initialState }: any) => {
         colorTextMenu: '#000',
         colorBgMenuItemHover: '#eef4ff',
         colorTextMenuSelected: '#fff',
-        //蓝色
         colorBgMenuItemSelected: '#3875f5',
       },
     },
-    //退出登录
     logout: () => {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      history.push('/login');
+      clearAuth('Logout successful');
     },
   };
 };
 
+const clearAuth = (msg: string) => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('accessExpire');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('userInfo');
+  message.error(msg);
+  history.push(loginPath);
+}
+
 export const request: RequestConfig = {
   timeout: 1000,
-  // other axios options you want
   errorConfig: {
-    errorHandler(){
-    },
-    errorThrower(){
-    }
+    errorHandler() { },
+    errorThrower() { }
   },
-  requestInterceptors: [
-    (config: any) => {
-      let token = localStorage.getItem('token')?.replace(/"/g, '');   
-      config.headers.Authorization = `Bearer ${token}`;
-      return config;
-    }
-  ],
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')?.replace(/"/g, '')}`,
+  },
   responseInterceptors: [
     (response: any) => {
-      // console.log('response', response);
-      // localStorage.setItem('token', response.data.access);
-      // localStorage.setItem('refreshToken', response.data.refresh);
-
-      return response;
+      console.log('response', response.config.url);
+      const useResponse = async () => {
+        const { code, msg } = response.data;
+        if (code === 401) {
+          clearAuth('登陆已过期');
+        }
+        return response;
+      }
+      return useResponse();
     }
-  ]
+  ],
 };

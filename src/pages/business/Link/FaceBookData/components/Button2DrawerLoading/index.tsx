@@ -1,11 +1,29 @@
 import { faceBookConfigQueryAtom } from "@/models/atomFaceBook";
-import { useState } from "react";
-import { useAtom } from "jotai";
+import { useEffect, useState } from "react";
+import { useAtom, useSetAtom } from "jotai";
 import { Button, Card, Drawer, Select, Space, Tag, Typography } from "antd";
-
+import { GetUserList } from "@/apis/user/mangerRequest";
 
 const DrawerContent = ({record}: {record: any}) => {
+    console.log('record',record);
+    
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+    const [userList, setUserList] = useState<any[]>([]);
+    const [searchParams, setSearchParams] = useState<{
+        accounts: number | undefined;
+        page: number;
+        page_size: number;
+    }>({
+        accounts: record.account,
+        page: 1,
+        page_size: 10
+    });
+    useEffect(() => {
+        GetUserList(searchParams).then((res) => {
+            // setUserList(res.data);
+            console.log('res',res);
+        });
+    }, []);
     
     const handleChange = (value: string) => {
         if (value && !selectedUsers.includes(value)) {
@@ -27,13 +45,13 @@ const DrawerContent = ({record}: {record: any}) => {
                 <Typography.Title level={4}>分配用户到广告账户</Typography.Title>
                 <Space direction="vertical" style={{ width: '100%' }}>
                     <div>
-                        <Typography.Text type="primary" strong>当前账户:</Typography.Text>
+                        <Typography.Text  strong>当前账户:</Typography.Text>
                         <Typography.Text style={{ marginLeft: 8 }}>
                             {record.name || 'Be-hzjz-填单-dj02'}
                         </Typography.Text>
                     </div>
                     <div>
-                        <Typography.Text type="primary" strong>账户ID:</Typography.Text>
+                        <Typography.Text  strong>账户ID:</Typography.Text>
                         <Typography.Text style={{ marginLeft: 8 }}>
                             {record.obj_id || 'act_6257821602622223'}
                         </Typography.Text>
@@ -90,7 +108,7 @@ const DrawerContent = ({record}: {record: any}) => {
 const Button2DrawerLoading = ({record}: {record: any}) => {
     const [showDrawer, setShowDrawer] = useState(false);
     const [currentRecord, setCurrentRecord] = useState(record);
-    const [faceBookConfigQuery, setFaceBookConfigQuery] = useAtom(faceBookConfigQueryAtom);
+    const setFaceBookConfigQuery = useSetAtom(faceBookConfigQueryAtom);
     return (
         <div className="flex flex-col gap-2">
             <Button type="primary" size="small" onClick={() => {
@@ -108,7 +126,7 @@ const Button2DrawerLoading = ({record}: {record: any}) => {
                 setShowDrawer(false);
             }}
             placement={'right'}
-            width={500}
+            width={600}
             >
                <DrawerContent record={currentRecord} />
             </Drawer>   

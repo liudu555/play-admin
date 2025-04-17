@@ -6,8 +6,8 @@ import FaceBookTab from "./components/FaceBookTab";
 import { GetAdvertisingAccountList, GetCampaignList, GetAdsetList, GetAdList, GetSummaryData } from "@/apis/facebook/bookRequest";
 import { message } from "antd";
 import AdvertisingType from "./enum";
-import { faceBookOrderRegisterAtom, faceBookOrderPaySubAtom, faceBookOrderFirstDayPayRateAtom } from "@/models/atomFaceBook";
-import { useAtom } from "jotai";
+import { faceBookOrderRegisterAtom, faceBookOrderPaySubAtom, faceBookOrderFirstDayPayRateAtom, faceBookAvailableSpentAtom, faceBookSpendAtom, faceBookOrderAmountAtom, faceBookRoiAtom } from "@/models/atomFaceBook";
+import { useAtomValue, useSetAtom } from "jotai";
 
 /**
  * 获取Facebook数据
@@ -35,9 +35,17 @@ const FaceBookData: React.FC = () => {
     campaign_id: undefined,
     adset_id: undefined
   });
-  const [registerOrder, setRegisterOrder] = useAtom(faceBookOrderRegisterAtom);
-  const [paySubOrder, setPaySubOrder] = useAtom(faceBookOrderPaySubAtom);
-  const [firstDayPayRateOrder, setFirstDayPayRateOrder] = useAtom(faceBookOrderFirstDayPayRateAtom);
+  const registerOrder = useAtomValue(faceBookOrderRegisterAtom);
+  const paySubOrder = useAtomValue(faceBookOrderPaySubAtom);
+  const firstDayPayRateOrder = useAtomValue(faceBookOrderFirstDayPayRateAtom);
+  /** 当前页账户余额 */
+  const setAvailableSpent = useSetAtom(faceBookAvailableSpentAtom);
+  /** 当前页消费金额 */
+  const setSpend = useSetAtom(faceBookSpendAtom);
+  /** 当前页回收金额 */
+  const setOrderAmount = useSetAtom(faceBookOrderAmountAtom);
+  /** 当前页roi */
+  const setRoi = useSetAtom(faceBookRoiAtom);
   /** 总页数 */
   const [pageTotal, setPageTotal] = useState<number>(0);
   /** 每页条数 */
@@ -120,6 +128,13 @@ const FaceBookData: React.FC = () => {
         message.error(error);
       }
     }
+
+    const handleSetSumData = (data: any) => {
+      setAvailableSpent(data.sum_data.available_spent);
+      setSpend(data.sum_data.spend);
+      setOrderAmount(data.sum_data.order_amount);
+      setRoi(data.sum_data.roi);
+    }
   /** 获取广告账户列表 */
   const loadAdvertisingAccountList = async () => {
     console.log('获取广告账户列表');
@@ -129,6 +144,7 @@ const FaceBookData: React.FC = () => {
         setAdvertisingAccountList(data.results);
         setPageTotal(data.pagination.total_items);
         setCurrentPageSize(data.pagination.current_page_size);
+        handleSetSumData(data);
       } else {
         throw new Error('获取广告账户列表失败');
       }
@@ -146,6 +162,7 @@ const FaceBookData: React.FC = () => {
         setCampaignList(data.results);
         setPageTotal(data.pagination.total_items);
         setCurrentPageSize(data.pagination.current_page_size);
+        handleSetSumData(data);
       } else {
         throw new Error('获取广告系列列表失败');
       }
@@ -163,6 +180,7 @@ const FaceBookData: React.FC = () => {
         setAdsetList(data.results);
         setPageTotal(data.pagination.total_items);
         setCurrentPageSize(data.pagination.current_page_size);
+        handleSetSumData(data);
       } else {
         throw new Error('获取广告组列表失败');
       }
@@ -180,6 +198,7 @@ const FaceBookData: React.FC = () => {
         setAdList(data.results);
         setPageTotal(data.pagination.total_items);
         setCurrentPageSize(data.pagination.current_page_size);
+        handleSetSumData(data);
       } else {
         throw new Error('获取广告列表失败');
       }

@@ -1,12 +1,13 @@
 import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { faceBookOrderPaySubAtom } from "@/models/atomFaceBook";
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
+
 /**
  * 充值订阅组件
  */
 const PaySubComponent = ({pay_people, total_pay_rate, weekly_subscribers_people, month_subscribers_people, year_subscribers_people, subscribers_rate, index}: any) => {
-    const [paySubOrder, setPaySubOrder] = useAtom(faceBookOrderPaySubAtom);
+    const setPaySubOrder = useSetAtom(faceBookOrderPaySubAtom);
     const [sortPayPeopleTitle, setSortPayPeopleTitle] = useState('支付人数升序');
     const [sortPayPeopleType, setSortPayPeopleType] = useState('asc');
 

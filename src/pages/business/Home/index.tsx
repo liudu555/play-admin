@@ -11,7 +11,7 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     asyncFetch();
-  }, []);
+  }, [user]);
 
   const asyncFetch = () => {
     fetch('https://gw.alipayobjects.com/os/bmw-prod/1d565782-dde4-4bb6-8946-ea6a38ccf184.json')
@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
       <div className="p-6 bg-gray-50">
         <Row gutter={16} className="mb-6">
           <Col span={6}>
-            <Card bordered={false} className="hover:shadow-lg transition-shadow duration-300">
+            <Card  className="hover:shadow-lg transition-shadow duration-300">
               <Statistic
                 title={<span className="flex items-center text-gray-600"><UserOutlined className="mr-2" />活跃用户</span>}
                 value={11.28}
@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card bordered={false} className="hover:shadow-lg transition-shadow duration-300">
+            <Card  className="hover:shadow-lg transition-shadow duration-300">
               <Statistic
                 title={<span className="flex items-center text-gray-600"><ShoppingCartOutlined className="mr-2" />新增订单</span>}
                 value={9.3}
@@ -60,7 +60,7 @@ const HomePage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card bordered={false} className="hover:shadow-lg transition-shadow duration-300">
+            <Card className="hover:shadow-lg transition-shadow duration-300">
               <Statistic
                 title={<span className="flex items-center text-gray-600"><DollarOutlined className="mr-2" />总收入</span>}
                 value={112893}
@@ -71,7 +71,7 @@ const HomePage: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card bordered={false} className="hover:shadow-lg transition-shadow duration-300">
+            <Card  className="hover:shadow-lg transition-shadow duration-300">
               <Statistic
                 title={<span className="flex items-center text-gray-600"><RiseOutlined className="mr-2" />转化率</span>}
                 value={8.6}

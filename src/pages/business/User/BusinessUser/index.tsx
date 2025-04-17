@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { GetUserList, PostAddUser,PutEditUser,DeleteUser } from '@/apis/user/mangerRequest';
 import { GetDepartMentList } from '@/apis/user/groupRequest';
+import { useAtomValue } from 'jotai';
+import { userAtom } from '@/models/atomUser';
 const md5 = require('md5');
 interface BusinessUserRecord {
   id: number;
@@ -32,8 +34,6 @@ const UserState = {
   },
 }
 
-
-
 const BusinessUser: React.FC = () => {
   const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,10 +44,10 @@ const BusinessUser: React.FC = () => {
   const [pageTotal, setPageTotal] = useState<number>(0);
   /** 每页条数 */
   const [currentPageSize, setCurrentPageSize] = useState<number>(10);
-  useEffect(() => {
-    console.log('form',form.getFieldsValue());
-    
-  }, [form]);
+  /** 用户信息 */
+  const loginUser = useAtomValue<any>(userAtom);
+  
+
   const [searchParams, setSearchParams] = useState<{
     ordering: string | undefined; /** 排序 */
     search: string | undefined; /** 搜索 */
@@ -178,11 +178,13 @@ const BusinessUser: React.FC = () => {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
+      width: 50,
     },
     {
       title: '用户名',
       dataIndex: 'username', 
       key: 'username',
+      width: 120,
     },
     {
       title: '角色',
@@ -191,7 +193,8 @@ const BusinessUser: React.FC = () => {
       render: (_, record) => {
         const {color,text} = UserState[record.state as keyof typeof UserState];
         return <Tag color={color}>{text}</Tag>;
-      }
+      },
+      width: 100,
     },
     {
       title: '小组',
@@ -203,7 +206,8 @@ const BusinessUser: React.FC = () => {
         } else {
           return <span>暂无小组</span>
         }
-      }
+      },
+      width: 150,
     },
     {
       title: '广告账户',
@@ -219,12 +223,13 @@ const BusinessUser: React.FC = () => {
           }
         </div>
       },
-      width: 280,
+      width: 220,
     },
     {
       title: '添加时间',
       dataIndex: 'addtime',
       key: 'addtime',
+      width: 120
     },
     {
       title: '是否有效',
@@ -232,7 +237,8 @@ const BusinessUser: React.FC = () => {
       key: 'is_deleted',
       render: (_, record) => {
         return record.is_deleted ? <Tag color='red'>已删除</Tag> : <Tag color='green'>正常</Tag>;
-      }
+      },
+      width: 100,
     },
     {
       title: '操作',
@@ -243,6 +249,7 @@ const BusinessUser: React.FC = () => {
           <a style={{ marginLeft: 8, color: '#ff4d4f' }} onClick={() => handleDelete(record)}>删除</a>
         </>
       ),
+      width: 150
     },
   ];
 
@@ -324,9 +331,18 @@ const BusinessUser: React.FC = () => {
             rules={[{ required: true, message: '请选择角色' }]}
           >
             <Select placeholder="请选择">
-              <Select.Option value="1">管理员</Select.Option>
-              <Select.Option value="2">组长</Select.Option>
-              <Select.Option value="3">运营</Select.Option>
+              {loginUser?.state === '1' ? (
+                <>
+                  <Select.Option value="1">管理员</Select.Option>
+                  <Select.Option value="2">组长</Select.Option>
+                  <Select.Option value="3">运营</Select.Option>
+                </>
+              ) : (
+                <>
+                  <Select.Option value="2">组长</Select.Option>
+                  <Select.Option value="3">运营</Select.Option>
+                </>
+              )}
             </Select>
           </Form.Item>
           

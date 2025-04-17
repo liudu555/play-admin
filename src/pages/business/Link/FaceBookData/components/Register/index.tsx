@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons";
-import { useAtom } from "jotai";
+import { useSetAtom } from "jotai";
 import { faceBookOrderRegisterAtom } from "@/models/atomFaceBook";
 
 /**
  * 注册组件
  */
 const RegisterComponent = ({resister_people, resister_cost, index}: any) => {
-    const [registerOrder, setRegisterOrder] = useAtom(faceBookOrderRegisterAtom);
-
-
+    const setRegisterOrder = useSetAtom(faceBookOrderRegisterAtom);
     const [sortResisterPeopleTitle, setSortResisterPeopleTitle] = useState('注册人数升序');
     const [sortResisterPeopleType, setSortResisterPeopleType] = useState('asc');
     

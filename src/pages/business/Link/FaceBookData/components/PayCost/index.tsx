@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { CaretDownOutlined, CaretUpOutlined } from "@ant-design/icons";
 import { faceBookOrderFirstDayPayRateAtom } from "@/models/atomFaceBook";
-import { useAtom } from "jotai";
-
+import { useSetAtom } from "jotai";
 /**
  * 首日付费组件
  */
 const PayCostComponent = ({first_day_people, first_day_pay_rate, per_capita_rate, pay_cost, index}: any) => {
-    const [firstDayPayRateOrder, setFirstDayPayRateOrder] = useAtom(faceBookOrderFirstDayPayRateAtom);
+    const setFirstDayPayRateOrder = useSetAtom(faceBookOrderFirstDayPayRateAtom);
     const [sortFirstDayPeopleTitle, setSortFirstDayPeopleTitle] = useState('首日人数升序');
     const [sortFirstDayPeopleType, setSortFirstDayPeopleType] = useState('asc');
     

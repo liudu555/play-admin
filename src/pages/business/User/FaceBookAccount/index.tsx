@@ -3,6 +3,8 @@ import CardContainer from "@/components/CardContainer";
 import { Tag, Button, Modal, Form, Input, Select, message } from 'antd';
 import { useState, useEffect } from 'react';
 import { PlusOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { useAtomValue } from 'jotai';
+import { tokenAtom } from '@/models/atomUser';
 
 interface FacebookAccountRecord {
   id: number;
@@ -19,7 +21,6 @@ const FaceBookUser: React.FC = () => {
   const [editingRecord, setEditingRecord] = useState<FacebookAccountRecord | null>(null);
   const [tableData, setTableData] = useState<FacebookAccountRecord[]>([]);
   const [visibleSecrets, setVisibleSecrets] = useState<Record<string, boolean>>({});
-
   useEffect(() => {
     // 初始化表格数据
     setTableData(data);

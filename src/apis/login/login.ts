@@ -11,3 +11,16 @@ export const PostLogin = (data: any) => {
     data,
   });
 };
+
+
+/**
+ * 刷新token
+ * @param data 
+ * @returns 
+ */
+export const PostRefreshToken = (data: any) => {
+  return request('/api/token/refresh/', {
+    method: 'POST',
+    data,
+  });
+};

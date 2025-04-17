@@ -1,4 +1,4 @@
-import { request } from "@umijs/max";
+import { request } from '@@/plugin-request';
 
 
 /**
@@ -34,6 +34,18 @@ export const PutEditDepartMent = (data: any) => {
     return request(`/api/departments/${data.id}/`, {
       method: 'PUT',
       data,
+    });
+};
+
+
+/**
+ * 获取所有用户列表
+ * @returns 
+ */
+export const GetAllUserList = (params: any) => {
+    return request('/api/get_all_users/', {
+      method: 'GET',
+      params,
     });
 };
 

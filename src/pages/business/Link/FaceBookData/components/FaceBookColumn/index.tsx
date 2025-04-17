@@ -4,7 +4,8 @@ import PaySubComponent from "../PaySub";
 import { Button2DrawerLoading, ButtonRoute } from "../Button2DrawerLoading";
 import RegisterComponent from "../Register";
 import PayCostComponent from "../PayCost";
-
+import { faceBookAvailableSpentAtom, faceBookOrderAmountAtom, faceBookRoiAtom, faceBookSpendAtom } from "@/models/atomFaceBook";
+import { useAtomValue } from "jotai";
 /**
  * 广告账户基础列
  */
@@ -25,6 +26,62 @@ interface BaseAdvertisingItem {
     per_capita_rate: string; /** 人均支付 */
     pay_cost: string; /** 付费成本 */
 }
+
+/**
+ * 账户金额
+ */
+const AvailableSpentSheet = () => {
+    const availableSpent = useAtomValue(faceBookAvailableSpentAtom);
+    return (
+        <div className="flex items-center flex-col">
+            <span>账户余额</span>
+             <span className="text-xs text-gray-400 color-[#ccc]">总计: ${availableSpent}</span>
+        </div>
+    )
+}
+
+/**
+ * 消费金额
+ */
+const SpendSheet = () => {
+    const spend = useAtomValue(faceBookSpendAtom);
+    return (
+        <div className="flex items-center flex-col">
+            <span>消费金额</span>
+            <span className="text-xs text-gray-400 color-[#ccc]">总计: ${spend}</span>
+        </div>
+    )
+}
+
+/**
+ * 回收金额
+ */
+const OrderAmountSheet = () => {
+    const orderAmount = useAtomValue(faceBookOrderAmountAtom);
+    return (
+        <div className="flex items-center flex-col">    
+            <span>回收金额</span>
+            <span className="text-xs text-gray-400 color-[#ccc]">总计: ${orderAmount}</span>
+        </div>
+    )
+}
+
+/**
+ * roi
+ */
+const RoiSheet = () => {
+    const roi: any = useAtomValue(faceBookRoiAtom);
+    return (
+        <div className="flex items-center flex-col">
+            <span>ROI</span>
+            <span className="text-xs text-gray-400 color-[#ccc]">
+                总计: {roi && roi !== '0' && roi !== '' ? parseFloat(roi).toFixed(2) : '0.00'}%
+            </span>
+        </div>
+    )
+}
+
+
 /**
  * 广告账户基础列
  */
@@ -32,41 +89,41 @@ const BaseAdvertisingColumns: ProColumns<BaseAdvertisingItem>[] = [
     {
         title: () => {
             return (
-                <div className="flex items-center flex-col">
-                    <span>消费金额</span>
-                    <span className="text-xs text-gray-400 color-[#ccc]">总计: ${1884123.66}</span>
-                </div>
+                <SpendSheet />
             )
         },
         dataIndex: 'spend',
         align: 'center',
-        width: 130
+        width: 130,
+        sorter: (a: any, b: any) => {
+            return a.spend - b.spend;
+        },
     },
     {
         title: () => {
             return (
-                <div className="flex items-center flex-col">
-                    <span>回收金额</span>
-                    <span className="text-xs text-gray-400 color-[#ccc]">总计: ${0.00}</span>
-                </div>
+                <OrderAmountSheet />
             )
         },
         dataIndex: 'order_amount',
         align: 'center',
-        width: 130
+        width: 130,
+        sorter: (a: any, b: any) => {
+            return a.order_amount - b.order_amount;
+        },
     },
     {
         title: () => {
             return (
-                <div className="flex items-center flex-col">
-                    <span>ROI</span>
-                    <span className="text-xs text-gray-400 color-[#ccc]">总计: 0.00%</span>
-                </div>
+                <RoiSheet />
             )
         },
         dataIndex: 'roi',
         align: 'center',
-        width: 130
+        width: 130,
+        sorter: (a: any, b: any) => {
+            return a.roi - b.roi;
+        },
     },
     {
         title: '注册数据',
@@ -197,15 +254,13 @@ const advertisingAccountColumns: ProColumns<BaseAdvertisingItem>[] = [
     {
         title: () => {
             return (
-                <div className="flex items-center flex-col">
-                    <span>账户余额</span>
-                    <span className="text-xs text-gray-400 color-[#ccc]">总计: ${1884123.66}</span>
-                </div>
+              <AvailableSpentSheet />
             )
         },
         dataIndex: 'available_spent',
         align: 'center',
-        width: 130
+        width: 130,
+        sorter: true,
     },
     ...BaseAdvertisingColumns,
     {

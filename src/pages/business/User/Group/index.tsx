@@ -1,10 +1,11 @@
 import { ProTable, ProColumns } from '@ant-design/pro-components';
 import CardContainer from "@/components/CardContainer";
-import { Tag, Button, Modal, Form, Input, Select, message } from 'antd';
-import { useState, useEffect } from 'react';
+import { Tag, Button, Modal, Form, Input, Select, message, Table } from 'antd';
+import { useState, useEffect, useRef } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { GetDepartMentList, PostAddDepartMent } from '@/apis/user/groupRequest';
+import { GetDepartMentList, PostAddDepartMent, GetAllUserList } from '@/apis/user/groupRequest';
 import { GetUserList } from '@/apis/user/mangerRequest';
+import { FormSub, FormSubRef } from './components/FormSub';
 interface GroupRecord {
   id: number;
   name: string;
@@ -13,11 +14,9 @@ interface GroupRecord {
 }
 
 const Group: React.FC = () => {
-  const [form] = Form.useForm();
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRecord, setEditingRecord] = useState<GroupRecord | null>(null);
   const [departMentList, setDepartMentList] = useState<GroupRecord[]>([]);
-  const [userList, setUserList] = useState<any[]>([]);
   const [pageTotal, setPageTotal] = useState<number>(0);
   const [currentPageSize, setCurrentPageSize] = useState<number>(10);
   const [searchParams, setSearchParams] = useState<{
@@ -27,26 +26,17 @@ const Group: React.FC = () => {
     page_size: 10,
     page: 1,
   });
+
+
+
+  const formRef = useRef<FormSubRef>(null);
+  
   useEffect(() => {
     // 初始化表格数据
     loadDepartMentList();
-    loadUserList();
   }, []);
 
-  /**
-   * 获取用户列表
-   */
-  const loadUserList = async () => {
-    const {code,data} = await GetUserList({
-      page_size: 1000,
-      page: 1,
-    });
-    if(code === 200) {
-      setUserList(data.results);
-    } else {
-      message.error('获取用户列表失败');
-    }
-  }
+ 
 
   /**
    * 获取小组列表
@@ -63,39 +53,38 @@ const Group: React.FC = () => {
   }
 
   const handleAdd = () => {
-    form.resetFields();
     setEditingRecord(null);
     setModalVisible(true);
   };
 
 
   const handleModalOk = async () => {
-    try {
-      const values = await form.validateFields();
-      console.log('values',values);
+    // try {
+    //   const values = await form.validateFields();
+    //   console.log('values',values);
       
-      if (values.id) {
+    //   if (values.id) {
       
-        console.log('编辑',values);
+    //     console.log('编辑',values);
         
-      } else {
-        // 新增
-        const {code,data} = await PostAddDepartMent({
-          name: values.name,
-          leader_id: values.leader_id,
-          user_ids: values.user_ids,
-        })
-        if(code === 200) {
-          message.success('新增成功');
-          loadDepartMentList();
-        } else {
-          message.error('新增失败');
-        }
-      }
-      setModalVisible(false);
-    } catch (error) {
-      console.error('表单验证失败:', error);
-    }
+    //   } else {
+    //     // 新增
+    //     const {code,data} = await PostAddDepartMent({
+    //       name: values.name,
+    //       leader_id: values.leader_id,
+    //       user_ids: values.user_ids,
+    //     })
+    //     if(code === 200) {
+    //       message.success('新增成功');
+    //       loadDepartMentList();
+    //     } else {
+    //       message.error('新增失败');
+    //     }
+    //   }
+    //   setModalVisible(false);
+    // } catch (error) {
+    //   console.error('表单验证失败:', error);
+    // }
   };
 
   const columns: ProColumns<GroupRecord>[] = [
@@ -166,61 +155,14 @@ const Group: React.FC = () => {
           showQuickJumper: true,
         }}
       />
-
-      <Modal
-        title={editingRecord ? '编辑小组' : '新增小组'}
-        open={modalVisible}
-        onOk={handleModalOk}
-        onCancel={() => setModalVisible(false)}
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            name="id"
-            hidden
-          >
-            <Input value={editingRecord?.id} />
-          </Form.Item>
-          <Form.Item
-            name="name"
-            label="小组名称"
-            rules={[{ required: true, message: '请输入小组名称' }]}
-          >
-            <Input placeholder="请输入" />
-          </Form.Item>
-
-          <Form.Item
-            name="leader_id"
-            label="组长"
-            rules={[{ required: true, message: '请选择组长' }]}
-          >
-            <Select placeholder="请选择">
-              {
-                userList.map((item:any) => {
-                  return <Select.Option value={item.id}>{item.username}</Select.Option>
-                })
-              }
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="user_ids"
-            label="组员"
-            rules={[{ required: true, message: '请选择组员' }]}
-          >
-            <Select 
-              mode="multiple"
-              placeholder="请选择"
-            > 
-              {
-                userList.map((item:any) => {
-                  return <Select.Option value={item.id}>{item.username}</Select.Option>
-                })
-              }
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <FormSub
+        ref={formRef}
+        editingRecord={editingRecord}
+        modalVisible={modalVisible}
+        setModalVisible={setModalVisible}
+        handleModalOk={handleModalOk}
+        handelSubmit={handleModalOk}
+      />
     </CardContainer>
   );
 };
