@@ -27,16 +27,6 @@ export default defineConfig({
       component: "./business/Home",
     },
     {
-      name: "权限演示",
-      path: "/access",
-      component: "./business/Access",
-    },
-    {
-      name: " CRUD 示例",
-      path: "/table",
-      component: "./business/Table",
-    },
-    {
       icon: "user",
       name: "用户管理",
       path: "/user",

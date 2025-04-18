@@ -1,10 +1,9 @@
 import { ProTable, ProColumns } from '@ant-design/pro-components';
 import CardContainer from "@/components/CardContainer";
-import { Tag, Button, Modal, Form, Input, Select, message, Table } from 'antd';
+import { Tag, Button,message, Table } from 'antd';
 import { useState, useEffect, useRef } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { GetDepartMentList, PostAddDepartMent, GetAllUserList } from '@/apis/user/groupRequest';
-import { GetUserList } from '@/apis/user/mangerRequest';
+import { GetDepartMentList, PostAddDepartMent, GetAllUserList, PutEditDepartMent } from '@/apis/user/groupRequest';
 import { FormSub, FormSubRef } from './components/FormSub';
 interface GroupRecord {
   id: number;
@@ -51,40 +50,60 @@ const Group: React.FC = () => {
       message.error('获取小组列表失败');
     }
   }
-
+  /**
+   * 新增
+   */
   const handleAdd = () => {
     setEditingRecord(null);
     setModalVisible(true);
   };
+  /**
+   * 编辑
+   */
+  const handleEdit = (record: GroupRecord) => {    
+    setEditingRecord(record);
+    setModalVisible(true);
+  }
 
-
-  const handleModalOk = async () => {
-    // try {
-    //   const values = await form.validateFields();
-    //   console.log('values',values);
-      
-    //   if (values.id) {
-      
-    //     console.log('编辑',values);
-        
-    //   } else {
-    //     // 新增
-    //     const {code,data} = await PostAddDepartMent({
-    //       name: values.name,
-    //       leader_id: values.leader_id,
-    //       user_ids: values.user_ids,
-    //     })
-    //     if(code === 200) {
-    //       message.success('新增成功');
-    //       loadDepartMentList();
-    //     } else {
-    //       message.error('新增失败');
-    //     }
-    //   }
-    //   setModalVisible(false);
-    // } catch (error) {
-    //   console.error('表单验证失败:', error);
-    // }
+  /**
+   * 提交
+   */
+  const handleSubmit = async (values: any) => {
+    try {
+      if (values.id) {
+        console.log('编辑',values);
+        const {code,data} = await PutEditDepartMent({
+          id: values.id,
+          name: values.name,
+          leader_id: values.leader_id,
+          user_ids: values.user_ids,
+        })
+        if(code === 200) {
+          message.success('编辑成功');
+          loadDepartMentList();
+          formRef.current?.clearForm();
+        } else {
+          message.error('编辑失败');
+        }
+      } else {
+        // 新增
+        const {code,data} = await PostAddDepartMent({
+          name: values.name,
+          leader_id: values.leader_id,
+          user_ids: values.user_ids,
+        })
+        if(code === 200) {
+          message.success('新增成功');
+          loadDepartMentList();
+          formRef.current?.clearForm();
+        } else {
+          message.error('新增失败');
+        }
+      }
+      setModalVisible(false);
+    } catch (error) {
+      console.error('表单验证失败:', error);
+    }
   };
 
   const columns: ProColumns<GroupRecord>[] = [
@@ -129,8 +148,17 @@ const Group: React.FC = () => {
         }
       }
     },
+    {
+      title: '操作',
+      dataIndex: 'action',
+      key: 'action',
+      render: (_,record) => {
+        return <Button type='link' onClick={() => handleEdit(record)}>编辑</Button>
+      },
+      width: 100,
+      align: 'center',
+    }
   ];
-
 
   return (
     <CardContainer title="小组管理">
@@ -160,8 +188,7 @@ const Group: React.FC = () => {
         editingRecord={editingRecord}
         modalVisible={modalVisible}
         setModalVisible={setModalVisible}
-        handleModalOk={handleModalOk}
-        handelSubmit={handleModalOk}
+        handelSubmit={handleSubmit}
       />
     </CardContainer>
   );

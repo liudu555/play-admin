@@ -6,20 +6,18 @@ interface FormSubProps {
   editingRecord: any;
   modalVisible: boolean;
   setModalVisible: (visible: boolean) => void;
-  handleModalOk: () => void;
   handelSubmit: (values: any) => void;
 }
 interface FormSubRef {
     clearForm: () => void;
 }
 const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((props,ref) => {
-    const {editingRecord, modalVisible, setModalVisible, handleModalOk, handelSubmit} = props;
+    const {editingRecord, modalVisible, setModalVisible, handelSubmit} = props;
     const [form] = Form.useForm();
     //组员列表
     const [groupList, setGroupList] = useState<any[]>([]);
     //组长列表
     const [leaderList, setLeaderList] = useState<any[]>([]);
-
     //组长列表分页
     const [leaderPageTotal, setLeaderPageTotal] = useState<number>(0);
     const [leaderCurrentPageSize, setLeaderCurrentPageSize] = useState<number>(8);
@@ -37,6 +35,17 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
     const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
 
     useEffect(() => {
+      if(editingRecord) {
+        setSelectedUserIds(editingRecord.users.map((user: any) => user.id));
+        form.setFieldsValue({
+          id: editingRecord.id,
+          name: editingRecord.name,
+          leader_id: editingRecord.leader.id,
+        });
+      }
+    }, [editingRecord]);
+
+    useEffect(() => {
       if(modalVisible) {
         loadGroupList();
         loadLeaderList();
@@ -46,7 +55,7 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
    * 获取用户列表
    */
   const loadGroupList = async () => {
-    const {code,data} = await GetAllUserList({...groupSearchParams, state: '2'}); 
+    const {code,data} = await GetAllUserList({...groupSearchParams, state: '3'}); 
     if(code === 200) {
       setGroupList(data.results);      
       setGroupPageTotal(data.pagination.total_items);
@@ -55,9 +64,11 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
       message.error('获取用户列表失败');
     }
   }
-
+  /**
+   * 获取组长列表
+   */
   const loadLeaderList = async () => {
-    const {code,data} = await GetAllUserList({...leaderSearchParams, state: '1'}); 
+    const {code,data} = await GetAllUserList({...leaderSearchParams, state: '2'}); 
     if(code === 200) {
       setLeaderList(data.results);
       setLeaderPageTotal(data.pagination.total_items);
@@ -66,11 +77,12 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
       message.error('获取组长列表失败');
     }
   }
-    const submit = async () => {
+  /**
+   * 提交
+   */
+  const submit = async () => {
         const values = await form.validateFields();
-        console.log(values);
-
-        // handelSubmit(values);
+        handelSubmit(values);
     }
     useImperativeHandle(ref, () => ({
         clearForm: () => {
@@ -96,7 +108,7 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
     };
     return (
     <Modal
-      width={800}
+      width={900}
       title={editingRecord ? '编辑小组' : '新增小组'}
       open={modalVisible}
       onOk={submit}
@@ -125,13 +137,16 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
           rules={[{ required: true, message: '请选择组长' }]}
         >
           <Select
+            showSearch
             placeholder="请选择组长"
             style={{ width: '100%' }}
-            fieldNames={{ label: 'username', value: 'id' }}
+            optionFilterProp="name"
+            fieldNames={{ label: 'name', value: 'id'}}
             options={leaderList.map((user: any) => ({
-              label: user.username,
+              label: user.name,
               value: user.id,
               username: user.username,
+              name: user.name,
               id: user.id
             }))}
             dropdownRender={(menu: any) => (
@@ -194,13 +209,15 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
             style={{ width: '100%' }}
             onChange={handleSelectChange}
             value={selectedUserIds}
-            fieldNames={{ label: 'username', value: 'id' }}
+            fieldNames={{ label: 'name', value: 'id'}}
             options={groupList.map((user: any) => ({
-              label: user.username,
+              label: user.name,
               value: user.id,
               username: user.username,
+              name: user.name,
               id: user.id
             }))}
+            optionFilterProp="name"
             dropdownRender={(menu: any) => (
               <div style={{ display: 'flex' }}>
                 <div style={{ flex: '0 0 200px' }}>
@@ -211,6 +228,11 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
                     scroll={{ x: 500 }}
                     dataSource={groupList}
                     columns={[
+                      {
+                        title: '编号',
+                        dataIndex: 'id',
+                        key: 'id',
+                      },
                       {
                         title: '姓名',
                         dataIndex: 'name',
@@ -237,7 +259,12 @@ const FormSub: React.FC<FormSubProps> = forwardRef<FormSubRef, FormSubProps>((pr
                     rowSelection={{
                       type: 'checkbox',
                       selectedRowKeys: selectedUserIds,
-                      onChange: (selectedRowKeys) => setSelectedUserIds(selectedRowKeys)
+                      onChange: (selectedRowKeys) => {
+                        // 直接设置选中的行，而不是追加
+                        setSelectedUserIds(selectedRowKeys);
+                      },
+                      // 保留已选中的行，即使它们不在当前页面
+                      preserveSelectedRowKeys: true
                     }}
                   />
                 </div>

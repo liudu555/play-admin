@@ -3,7 +3,7 @@ import { baseMock } from './baseMock';
 import './index.less';
 const BaseItem: React.FC<{item: any}> = ({item}) => {
     return (
-       <div className='base-item'>
+       <div className='w-full flex-wrap base-item'>
         <div className={`base-content`} style={{borderLeft: `5px solid ${item.themeColor} `}}>
         <div className='base-item-title text-left'>{item.name}</div>
         <div className='item-list'>
@@ -24,8 +24,6 @@ const BaseItem: React.FC<{item: any}> = ({item}) => {
 const FaceBookBase: React.FC<{summaryData: any}> = ({summaryData}) => {
     const [baseData, setBaseData] = useState<any[]>([]);
     const loadBaseData = async () => {
-        console.log('111');
-        
         const res = await baseMock(summaryData);
         setBaseData(res);
     }
@@ -33,7 +31,7 @@ const FaceBookBase: React.FC<{summaryData: any}> = ({summaryData}) => {
         loadBaseData();
     }, [summaryData])
   return (
-    <div className='flex mt-10 gap-[10px]'>
+    <div className='flex mt-10 gap-[10px] w-full '>
         {
             baseData.map((item) => (
                 <BaseItem key={item.id} item={item} />
